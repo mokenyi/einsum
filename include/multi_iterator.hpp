@@ -17,7 +17,7 @@ class multi_iterator {
 
 public:
   template<typename... Ts>
-  multi_iterator(Ts... x);
+  multi_iterator(std::tuple<Ts...> const& x);
   size_t constexpr num_ops = sizeof...(Ts);
 
   using current_t = std::tuple<Ts::value_type const*...>;
@@ -42,6 +42,10 @@ private:
   template<typename U, typename... Us>
   void set_op_sh(U firstOp, Us... otherOps);
   void set_op_sh();
+
+  template<size_t I>
+  void bump_index(int j);
+  void bump_index();
 }
 
 #include "impl/multi_iterator.tpp"

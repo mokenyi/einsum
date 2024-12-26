@@ -2,10 +2,10 @@
 
 template<typename... Ts>
 multi_iterator::multi_iterator(
-  Ts... x,
+  std::tuple<Ts...> const& x,
   xt::xtensor<size_t,2> const& op_axes
 )
-: exp(std::tuple::make_tuple(x))
+: exp(x)
 , op_axes(op_axes)
 , ndim(op_axes.shape(1))
 , idx(0LU);
@@ -19,6 +19,18 @@ multi_iterator::multi_iterator(
 
   set_op_sh(x);
   set_shape();
+  init_current<num_ops-1>();
+}
+
+template<size_t N>
+void init_current() {
+  std::get<N>(current) = std::get<N>(x).data();
+  init_current<N-1>();
+}
+
+template<>
+void init_current<0>() {
+  std::get<0LU>(current) = std::get<0LU>(x).data();
 }
 
 void multi_iterator::set_shape() {
@@ -57,6 +69,23 @@ void multi_iterator::set_shape() {
   }
 }
 
+template<size_t I>
+void multi_iterator::bump_index(int j) {
+  auto op = std::get<I>();
+  if (op_axes.at(I, j) != -1) {
+    current.get<I>() += op.strides(j);
+  }
+  set_current<I-1>();
+}
+
+template<>
+void multi_iterator::bump_index<0>(int j) {
+  auto op = std::get<I>();
+  if (op_axes.at(0, j) != -1) {
+    current.get<0>() += op.strides(j);
+  }
+}
+
 void multi_iterator::next()
 {
   if (!hasnext()) {
@@ -68,13 +97,7 @@ void multi_iterator::next()
     if (idx.at(j) < shape.at(j)-1)
     {
       ++idx.at(j);
-      for (int op=0; op<num_ops; ++op) {
-        if (op_axes.at(op, j) != -1) {
-          // TODO This approach won't work because you can only use compile-time
-          // constant indexes to access entries in current!
-          current
-        }
-      }
+      bump_index<num_ops-1>();
       break;
     }
     else
