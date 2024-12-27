@@ -1,4 +1,34 @@
 #include <algorithm>
+#include <iostream>
+
+template<size_t N = 0LU, typename... Ts>
+typename std::enable_if<N == sizeof...(Ts)-1, void>::type print(
+  std::tuple<Ts...> const& current,
+  std::ostream& out,
+  std::vector<size_t> const& idx
+) {
+  out << "(" << N << ":" << std::get<N>(current) << ":" << *std::get<N>(current) << ")" << std::endl;
+}
+
+template<size_t N = 0LU, typename... Ts>
+typename std::enable_if<N < sizeof...(Ts)-1, void>::type print(
+  std::tuple<Ts...> const& current,
+  std::ostream& out,
+  std::vector<size_t> const& idx
+) {
+  out << "(" << N << ":" << std::get<N>(current) << ":" << *std::get<N>(current) << "), ";
+  print<N+1>(current, out, idx);
+}
+
+template<typename... Ts>
+void multi_iterator<Ts...>::print_current() {
+  std::cout << "#";
+  for (int i=0; i<ndim; ++i) {
+    std::cout << " " << idx.at(i);
+  }
+  std::cout << std::endl;
+  print(current, std::cout, idx);
+}
 
 template<size_t N = 0LU, typename... Ts>
 typename std::enable_if<N == sizeof...(Ts)-1, void>::type init_current(
@@ -57,12 +87,12 @@ typename std::enable_if<N < sizeof...(Ts)-1, void>::type set_op_sh(
 template<typename... Ts>
 multi_iterator<Ts...>::multi_iterator(
   std::tuple<Ts...> const& x,
-  xt::xtensor<size_t,2> const& op_axes
+  xt::xtensor<int,2> const& op_axes
 )
 : exp(x)
 , op_axes(op_axes)
 , ndim(op_axes.shape(1))
-, idx(0LU)
+, idx(ndim, 0LU)
 {
   op_idx.fill(0LU);
   std::array<size_t,2> op_sh_sh;
@@ -103,7 +133,8 @@ void multi_iterator<Ts...>::set_shape() {
     if (bad_op_it != i.end()) {
       std::stringstream ss;
       size_t const bad_axis = op_axes.at(*bad_op_it, j);
-      ss << "Axis " << bad_axis << " of operand " << *bad_op_it;
+      ss << "For dimension " << j << " of iterator, axis " << bad_axis;
+      ss << " of operand " << *bad_op_it;
       ss << " has an incorrect length " << op_sh.at(*bad_op_it, bad_axis);
       ss << " != " << size_dim_j;
       throw std::invalid_argument(ss.str());
@@ -114,30 +145,40 @@ void multi_iterator<Ts...>::set_shape() {
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I > 0), void>::type bump_index(
+typename std::enable_if<I == 0, void>::type set_index(
   std::tuple<typename Ts::value_type*...>& current,
   std::tuple<Ts...>& exp,
   xt::xtensor<int,2> const& op_axes,
-  size_t j
-) {
-  auto op = std::get<I>(exp);
-  if (op_axes.at(I, j) != -1) {
-    std::get<I>(current) += op.strides(j);
+  std::vector<size_t> const& idx)
+{
+  auto& op = std::get<I>(exp);
+  size_t const ndim=op_axes.shape(1);
+  size_t offset = 0LU;
+  for (int j=0; j<ndim; ++j) {
+    if (op_axes.at(I, j) != -1) {
+      offset += op.strides()[op_axes.at(I, j)] * idx.at(j);
+    }
   }
-  bump_index<I-1>(current, exp, op_axes);
+  std::get<I>(current) = op.data() + offset;
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<I == 0, void>::type bump_index(
+typename std::enable_if<(I > 0), void>::type set_index(
   std::tuple<typename Ts::value_type*...>& current,
   std::tuple<Ts...>& exp,
   xt::xtensor<int,2> const& op_axes,
-  size_t j
-) {
-  auto op = std::get<I>(exp);
-  if (op_axes.at(0, j) != -1) {
-    std::get<0>(current) += op.strides(j);
+  std::vector<size_t> const& idx)
+{
+  auto& op = std::get<I>(exp);
+  size_t const ndim=op_axes.shape(1);
+  size_t offset = 0LU;
+  for (int j=0; j<ndim; ++j) {
+    if (op_axes.at(I, j) != -1) {
+      offset += op.strides()[op_axes.at(I, j)] * idx.at(j);
+    }
   }
+  std::get<I>(current) = op.data() + offset;
+  set_index<I-1>(current, exp, op_axes, idx);
 }
 
 template<typename... Ts>
@@ -161,30 +202,13 @@ void multi_iterator<Ts...>::next()
     if (idx.at(j) < shape.at(j)-1)
     {
       ++idx.at(j);
-      bump_index<num_ops-1>(current, exp, op_axes, j);
       break;
     }
     else
     {
+
       idx.at(j) = 0;
     }
   }
-
-//  mtoo::zip(exp, current,
-//      [&idx, &op_axes](const auto& x, auto& y, size_t arg_idx)
-//      {
-//        size_t const ndim = x.dimension();
-//        size_t el_idx = std::vector<size_t>(ndim);
-//        for (int j=ndim-1; j>=0; --j) {
-//          // TODO: This isn't legal, but is conceptually correct.
-//          el_idx.at(j) = idx.at(
-//              std::find(op_axes[arg_idx].begin(), op_axes[arg_idx].end(), j) -
-//                op_axes[arg_idx].begin()
-//              );
-//        }
-//
-//        size_t const flat_idx = flatten(el_idx);
-//        y = &*(x.begin() + flat_idx);
-//      }
+  set_index<num_ops-1>(current, exp, op_axes, idx);
 }
-

@@ -16,12 +16,13 @@ class multi_iterator {
 public:
   multi_iterator(
     std::tuple<Ts...> const& x,
-    xt::xtensor<size_t,2> const& op_axes
+    xt::xtensor<int,2> const& op_axes
   );
 
   static size_t constexpr num_ops = sizeof...(Ts);
   void next();
   bool hasnext();
+  void print_current();
   using current_t = std::tuple<typename Ts::value_type*...>;
 private:
   using size_type = size_t;
@@ -43,7 +44,7 @@ private:
 template<typename... Ts>
 multi_iterator<Ts...> make_multi_iterator(
   std::tuple<Ts...> const& t,
-  xt::xtensor<size_t,2> const& op_axes
+  xt::xtensor<int,2> const& op_axes
 ) {
   // TODO: Assert that they are all xcontainers.
   //static_assert(
