@@ -1,6 +1,10 @@
 #ifndef MULTI_ITERATOR_HPP
 #define MULTI_ITERATOR_HPP
 
+#include "xtl/xtype_traits.hpp"
+#include "xtensor/xexpression.hpp"
+#include "xtensor/xtensor.hpp"
+
 // A version numpy's Array Iterator which simultaneously iterates over a
 // set of xtensors.
 // 
@@ -8,21 +12,19 @@
 // TODO: Enforce constraint that each Ts is either an xtensor or xarray (i.e. container type?)
 template<typename... Ts>
 class multi_iterator {
-  // TODO: Assert that they are all xcontainers.
-  static_assert(
-    xtl::conjunction<xt::is_xexpression(Ts)...>,
-    "All parameters to multi_iterator must be xexpressions"
-  );
-
 
 public:
-  template<typename... Ts>
-  multi_iterator(std::tuple<Ts...> const& x);
-  size_t constexpr num_ops = sizeof...(Ts);
+  multi_iterator(
+    std::tuple<Ts...> const& x,
+    xt::xtensor<size_t,2> const& op_axes
+  );
 
-  using current_t = std::tuple<Ts::value_type const*...>;
+  static size_t constexpr num_ops = sizeof...(Ts);
+  void next();
+  bool hasnext();
+  using current_t = std::tuple<typename Ts::value_type*...>;
 private:
-  using size_type = std::common_type<Ts::size_type...>;
+  using size_type = size_t;
   size_t ndim;
   std::tuple<Ts...> exp;
   current_t current;
@@ -30,24 +32,27 @@ private:
   std::vector<size_t> idx;
   // [i, j] = index in op i of the dim which dim j in iterator is mapped to.
   xt::xtensor<int,2> op_axes; 
-  std::array<size_type, num_ops> op_idx;
-  xt::xtensor<size_t,2> op_sh;
+  std::array<size_t, num_ops> op_idx;
+  xt::xtensor<int,2> op_sh;
   void reset(size_t arg, size_t dim);
   void set_shape();
-  
-  template<typename U, typename... Us>
-  size_t get_max_op_ndim(U firstOp, Us... otherOps);
-  size_t get_max_op_ndim();
-
-  template<typename U, typename... Us>
-  void set_op_sh(U firstOp, Us... otherOps);
-  void set_op_sh();
-
-  template<size_t I>
-  void bump_index(int j);
-  void bump_index();
-}
+};
 
 #include "impl/multi_iterator.tpp"
 
+template<typename... Ts>
+multi_iterator<Ts...> make_multi_iterator(
+  std::tuple<Ts...> const& t,
+  xt::xtensor<size_t,2> const& op_axes
+) {
+  // TODO: Assert that they are all xcontainers.
+  //static_assert(
+  //  xtl::conjunction<
+  //    typename std::integral_constant<bool, xt::is_xexpression(Ts)::value>...
+  //  >::value,
+  //  "All parameters to multi_iterator must be xexpressions"
+  //);
+
+  return multi_iterator<Ts...>(t, op_axes);
+}
 #endif // MULTI_ITERATOR_HPP
