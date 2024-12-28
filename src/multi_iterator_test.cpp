@@ -1,5 +1,12 @@
 #include "multi_iterator_test.hpp"
 
+#include "multi_iterator.hpp"
+#include "xtensor/xtensor.hpp"
+#include "xtensor/xarray.hpp"
+#include "xtensor/xfixed.hpp"
+#include "xtensor/xio.hpp"
+
+
 void multi_iterator_test() {
   std::array<size_t,2> sh2 = {1,4};
   xt::xtensor<double,2> x = xt::arange(0, 4).reshape({1,4});
