@@ -1,6 +1,13 @@
-#include "multi_iterator_test.hpp"
+#ifndef MULTI_ITERATOR_TEST_HPP
+#define MULTI_ITERATOR_TEST_HPP
 
-int main(int argc, char *argv[]) {
+#include "multi_iterator.hpp"
+#include "xtensor/xtensor.hpp"
+#include "xtensor/xarray.hpp"
+#include "xtensor/xfixed.hpp"
+#include "xtensor/xio.hpp"
+
+void multi_iterator_test() {
   std::array<size_t,2> sh2 = {1,4};
   xt::xtensor<double,2> x = xt::arange(0, 4).reshape({1,4});
   std::cout << x << std::endl;
@@ -28,5 +35,7 @@ int main(int argc, char *argv[]) {
     mi.next();
     mi.print_current();
   }
-  return 0;
 }
+
+#endif // MULTI_ITERATOR_TEST_HPP
+
