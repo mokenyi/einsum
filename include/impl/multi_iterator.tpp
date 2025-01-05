@@ -118,21 +118,21 @@ void multi_iterator<Ts...>::set_shape() {
       i.begin(),
       i.end(),
       [this, j](size_t i_p) {
-        return op_axes.at(i_p, j) != -1;
+        return op_axes.at(i_p).at(j) != -1;
       }
     );
     size_t const size_dim_j = op_sh.at(
       *non_broadcast_op_it,
-      op_axes.at(*non_broadcast_op_it, j)
+      op_axes.at(*non_broadcast_op_it).at(j)
     );
     auto bad_op_it = std::find_if_not(i.begin(), i.end(),
       [this, j, size_dim_j](size_t i_p) {
-        return op_axes.at(i_p, j) == -1 || op_sh.at(i_p, op_axes.at(i_p, j)) == size_dim_j;
+        return op_axes.at(i_p).at(j) == -1 || op_sh.at(i_p, op_axes.at(i_p).at(j)) == size_dim_j;
       });
 
     if (bad_op_it != i.end()) {
       std::stringstream ss;
-      size_t const bad_axis = op_axes.at(*bad_op_it, j);
+      size_t const bad_axis = op_axes.at(*bad_op_it).at(j);
       ss << "For dimension " << j << " of iterator, axis " << bad_axis;
       ss << " of operand " << *bad_op_it;
       ss << " has an incorrect length " << op_sh.at(*bad_op_it, bad_axis);
@@ -155,8 +155,8 @@ typename std::enable_if<I == 0, void>::type set_index(
   size_t const ndim=op_axes.shape(1);
   size_t offset = 0LU;
   for (int j=0; j<ndim; ++j) {
-    if (op_axes.at(I, j) != -1) {
-      offset += op.strides()[op_axes.at(I, j)] * idx.at(j);
+    if (op_axes.at(I).at(j) != -1) {
+      offset += op.strides()[op_axes.at(I).at(j)] * idx.at(j);
     }
   }
   std::get<I>(current) = op.data() + offset;
@@ -173,8 +173,8 @@ typename std::enable_if<(I > 0), void>::type set_index(
   size_t const ndim=op_axes.shape(1);
   size_t offset = 0LU;
   for (int j=0; j<ndim; ++j) {
-    if (op_axes.at(I, j) != -1) {
-      offset += op.strides()[op_axes.at(I, j)] * idx.at(j);
+    if (op_axes.at(I).at(j) != -1) {
+      offset += op.strides()[op_axes.at(I).at(j)] * idx.at(j);
     }
   }
   std::get<I>(current) = op.data() + offset;
