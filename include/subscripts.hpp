@@ -20,10 +20,104 @@ struct subscripts {
   static constexpr size_t start_second = sizeof...(I) - 1;
   using tuple_type = std::tuple<std::integral_constant<int,I>...>;
 
+  static std::string to_string() {
+    std::vector<int> const = labels = to_vector();
+    std::stringstream ss;
+    ss << "[" << *labels.begin();
+    for (int j=1; j<labels.size(); ++j) {
+      ss << ", " << labels.at(j);
+    }
+    ss << "]";
+
+    return ss.str();
+  }
+
+  static std::vector<int> parse_operand_subscripts(
+    int ndim,
+    int ellipsis = static_cast<int>('_')
+  ) {
+    constexpr size_t num_subscripts = sizeof...(I);
+    if (num_subscripts > ndim) {
+      std::stringstream ss;
+      ss << "num_subscripts (" << num_subscripts << ") > ndim (" << ndim;
+      ss << ")";
+      throw std::invalid_argument(ss.str());
+    }
+
+    std::vector<int> = labels = to_vector();
+    int const num_ellipses = std::count(labels.begin(), labels.end(), ellipsis);
+    if (num_ellipses > 1) {
+      std::stringstream ss;
+      ss << "Found multiple ellipses in subscripts " << to_string();
+      throw std::invalid_argument(ss.str());
+    }
+
+    auto ellipsis_it = std::find(labels.begin(), labels.end(), ellipsis);
+    int const found_ellipsis = ellipsis_it == labels.end() ? -1 :
+      std::distance(labels.begin(), ellipsis_it);
+
+    std::vector<std::array<int,2>> label_counts;
+
+    for (int k=0; k<labels.size(); ++k) {
+      int const i = labels.at(k);
+
+      auto it = std::find_if(
+        label_counts.begin(),
+        label_counts.end(),
+        [i](std::array<int,2> const& a) { return a.at(0) == i; }
+      );
+
+      if (it != label_counts.end()) {
+        it->at(1)++;
+      }
+
+      else {
+        label_counts.push_back(std::array<int,2>());
+        label_counts.back().at(0) = i;
+        label_counts.back().at(1) = 1;
+      }
+    }
+
+    if (found_ellipsis == -1) {
+      if (num_subscripts != ndim) {
+        std::stringstream ss;
+        ss << "ndim (" << ndim ") != number of subscripts (" << num_subscripts;
+        ss << ") but no ellipsis provided to broadcast the extra dimensions";
+        throw std::invalid_argument(ss.str());
+      }
+    }
+    else {
+      for (int i=0; i<ndim-num_subscripts-1; ++i) {
+        labels.insert(std::next(labels.begin(), found_ellipsis), ellipsis);
+      }
+    }
+
+    // Overwrite each repeated label with the offset to the first appearance
+    // of the label.
+    for (auto it=labels.begin(); it!=labels.end(); ++it) {
+      for (auto jt=std::next(it); jt!=labels.end(); jt=std::find(++jt,labels.end(),*it)) {
+        *jt = -static_cast<int>(std::distance(it,jt));
+      } 
+    }
+
+    return labels;
+  }
+
   static std::vector<int> to_vector() {
     std::vector<int> ret;
     push_value(ret, tuple_type());
     return ret;
+  }
+
+  static std::vector<int> get_combined_labels(int ndim, int ellipsis) {
+    std::vector<int> labels = parse_operand_subscripts(ndim, ellipsis);
+    for (auto it=labels.begin(); it!=labels.end(); ++it) {
+      if (*it < 0) {
+        it = labels.erase(it);
+      }
+    }
+
+    return labels;
   }
 };
 
