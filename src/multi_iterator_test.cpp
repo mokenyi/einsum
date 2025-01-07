@@ -18,13 +18,11 @@ void multi_iterator_test() {
 
   auto t = std::make_tuple(x, y, z);
   // shape of iterator should be [3, 1, 4, 2]
-  xt::xtensor<int,2> op_axes(
-      {
-        {-1,  0,  1, -1},
-        { 0, -1,  2,  1},
-        { 2,  0,  3,  1}
-      }
-  );
+
+  std::array<std::vector<int>,3> op_axes;
+  op_axes.at(0) = {-1,  0,  1, -1};
+  op_axes.at(1) = { 0, -1,  2,  1},
+  op_axes.at(2) = { 2,  0,  3,  1};
   for (int i=0; i<z.size(); ++i) {
     std::cout << " " << z.data() + i << "," << *(z.data() + i);
   }

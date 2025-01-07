@@ -21,7 +21,7 @@ struct subscripts {
   using tuple_type = std::tuple<std::integral_constant<int,I>...>;
 
   static std::string to_string() {
-    std::vector<int> const = labels = to_vector();
+    std::vector<int> const labels = to_vector();
     std::stringstream ss;
     ss << "[" << *labels.begin();
     for (int j=1; j<labels.size(); ++j) {
@@ -44,7 +44,7 @@ struct subscripts {
       throw std::invalid_argument(ss.str());
     }
 
-    std::vector<int> = labels = to_vector();
+    std::vector<int> labels = to_vector();
     int const num_ellipses = std::count(labels.begin(), labels.end(), ellipsis);
     if (num_ellipses > 1) {
       std::stringstream ss;
@@ -81,7 +81,8 @@ struct subscripts {
     if (found_ellipsis == -1) {
       if (num_subscripts != ndim) {
         std::stringstream ss;
-        ss << "ndim (" << ndim ") != number of subscripts (" << num_subscripts;
+        ss << "ndim (" << ndim << ") != number of subscripts (";
+        ss << num_subscripts;
         ss << ") but no ellipsis provided to broadcast the extra dimensions";
         throw std::invalid_argument(ss.str());
       }

@@ -23,10 +23,17 @@ void get_combined_dims_view_test() {
     subs1::start_second,
     typename subs1::tuple_type
   >::value << std::endl;
-    
-  get_combined_dims_view<subs1>(x);
+
+  int const ellipsis = '_';
+  get_combined_dims_view<subs1>(x, ellipsis);
 
   using subs2 = subscripts<1, 1, 2, 3>;
+  std::vector<int> const v = subs2::to_vector();
+  for (int i=0; i<v.size(); ++i) {
+    std::cout << " v[" << i << "] = " << v.at(i);
+  }
+  std::cout << std::endl;
+
   std::cout << has_repeated_labels<
     subs2::start_first,
     subs2::start_second,
@@ -35,5 +42,5 @@ void get_combined_dims_view_test() {
 
   std::cout << "strides signed? " << std::is_signed<xt::xarray<short>::strides_type::value_type>::value << std::endl;
   std::cout << "shape signed? " << std::is_signed<xt::xarray<short>::shape_type::value_type>::value << std::endl;
-  get_combined_dims_view<subs2>(std::move(w));
+  get_combined_dims_view<subs2>(std::move(w), ellipsis);
 }

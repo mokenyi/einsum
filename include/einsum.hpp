@@ -4,12 +4,14 @@
 #include "xtensor/xarray.hpp"
 #include <type_traits>
 
-template<typename O, typename... Ss>
+template<typename... Ss>
 struct einsum {
-  template<typename... Ts>
-  auto eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<typename std::common_type<Ts::value_type...>::type>;
+  template<typename O, typename... Ts>
+  auto eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<typename std::common_type<typename Ts::value_type...>::type>;
   int ellipsis;
   einsum(int e = static_cast<int>('_'));
-}
+};
 
-#define // EINSUM_HPP
+#include "impl/einsum.tpp"
+
+#endif // EINSUM_HPP

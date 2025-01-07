@@ -87,11 +87,11 @@ typename std::enable_if<N < sizeof...(Ts)-1, void>::type set_op_sh(
 template<typename... Ts>
 multi_iterator<Ts...>::multi_iterator(
   std::tuple<Ts...> const& x,
-  xt::xtensor<int,2> const& op_axes
+  op_axes_type const& op_axes
 )
 : exp(x)
 , op_axes(op_axes)
-, ndim(op_axes.shape(1))
+, ndim(op_axes.at(0).size())
 , idx(ndim, 0LU)
 {
   op_idx.fill(0LU);
@@ -148,11 +148,11 @@ template<size_t I, typename... Ts>
 typename std::enable_if<I == 0, void>::type set_index(
   std::tuple<typename Ts::value_type*...>& current,
   std::tuple<Ts...>& exp,
-  xt::xtensor<int,2> const& op_axes,
+  typename multi_iterator<Ts...>::op_axes_type const& op_axes,
   std::vector<size_t> const& idx)
 {
   auto& op = std::get<I>(exp);
-  size_t const ndim=op_axes.shape(1);
+  size_t const ndim=op_axes.at(0).size();
   size_t offset = 0LU;
   for (int j=0; j<ndim; ++j) {
     if (op_axes.at(I).at(j) != -1) {
@@ -166,11 +166,11 @@ template<size_t I, typename... Ts>
 typename std::enable_if<(I > 0), void>::type set_index(
   std::tuple<typename Ts::value_type*...>& current,
   std::tuple<Ts...>& exp,
-  xt::xtensor<int,2> const& op_axes,
+  typename multi_iterator<Ts...>::op_axes_type const& op_axes,
   std::vector<size_t> const& idx)
 {
   auto& op = std::get<I>(exp);
-  size_t const ndim=op_axes.shape(1);
+  size_t const ndim=op_axes.at(0).size();
   size_t offset = 0LU;
   for (int j=0; j<ndim; ++j) {
     if (op_axes.at(I).at(j) != -1) {

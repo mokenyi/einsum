@@ -15,16 +15,15 @@ typename std::enable_if<
   xt::xstrided_view<xt::xclosure_t<E const&>,typename E::shape_type,xt::layout_type::dynamic>
 >::type get_combined_dims_view(xt::xexpression<E> const& x, int ellipsis) {
   std::cout << "has repeated label" << std::endl;
-  auto y = x.derived_cast();
-  int const ndim = x.dimension();
-  std::vector<int> const labels = I::parse_operand_subscripts(x, ellipsis);
+  auto const& y = x.derived_cast();
+  int const ndim = y.dimension();
+  std::vector<int> const labels = I::parse_operand_subscripts(ndim, ellipsis);
   std::vector<int> icombinemap(ndim, -1);
 
   int icombine(0);
   std::vector<size_t> new_dims;
-  std::vector<int> new_strides;
+  std::vector<long> new_strides;
 
-  int const ndim = labels.size();
   for (int idim = 0; idim < ndim; ++idim) {
     int const label = labels.at(idim);
     int const dim = y.shape(idim);
@@ -43,14 +42,17 @@ typename std::enable_if<
         std::stringstream ss;
         ss << "Cannot collapse dimension " << idim << " (of size ";
         ss << dim << ") into dimension " << idim + label << " (of size ";
-        ss << new_dims.at(i) << ") for subscripts " << I::to_vector();
-        throw std::invaid_argument(ss.str());
+        ss << new_dims.at(i) << ") for subscripts " << I::to_string();
+        throw std::invalid_argument(ss.str());
       }
       new_strides.at(i) += stride;
     }
   }
 
-  return xt::strided_view(y, std::move(new_dims), std::move(new_strides), 0LU, xt::layout_type::dynamic);
+  using shape_type = xt::svector<size_t>;
+  using strides_type = xt::get_strides_t<shape_type>;
+
+  return xt::strided_view(y,shape_type{new_dims.begin(), new_dims.end()},strides_type{new_strides.begin(), new_strides.end()},0LU,xt::layout_type::dynamic);
 }
 
 template<typename I, typename E>
