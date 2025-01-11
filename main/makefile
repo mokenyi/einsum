@@ -13,11 +13,6 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 SRCS := $(shell find src -name \*.cpp)
 OBJS := $(SRCS:src/%.cpp=obj/%.o)
 
-TEST_SRCS := $(shell find test -name \*.cpp)
-TEST_OBJS := $(TEST_SRCS:src/%.cpp=obj/%.o)
-
-ALL_SRCS := $(SRCS) + $(TEST_SRCS)
-
 main: $(OBJS)
 	$(CC) $(CPPFLAGS) $^ -o$@ $(INCS) $(LIB_PATHS) $(LIBS) 
 
@@ -32,7 +27,7 @@ $(DEPDIR): ; @mkdir -p $@
 
 #$(OBJDIR): ; @mkdir -p $@
 
-DEPFILES := $(ALL_SRCS:$(SRCDIR)/%.cpp=$(DEPDIR)/%.d)
+DEPFILES := $(SRCS:$(SRCDIR)/%.cpp=$(DEPDIR)/%.d)
 $(DEPFILES):
 
 include $(wildcard $(DEPFILES))
