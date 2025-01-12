@@ -1,11 +1,7 @@
 #include "doctest.h"
 #include "einsum.hpp"
 #include "subscripts.hpp"
-
-enum Labels: int {
-  _,
-  A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-};
+#include "labels.hpp"
 
 TEST_CASE("get_label_counts should count occurrences of labels of uncombined "
   "dimensions in a set of subscripts") {

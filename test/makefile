@@ -2,7 +2,7 @@ OBJDIR := obj
 DEPDIR := $(OBJDIR)/.deps
 SRCDIR := src
 
-INCS=-I ../main/include -I ~/.local/include
+INCS=-I ../main/include -I include -I ~/.local/include
 CC=g++
 CPPFLAGS=-std=c++14
 DEBUG=-g
