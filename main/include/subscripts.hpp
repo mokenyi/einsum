@@ -45,6 +45,7 @@ struct subscripts {
     }
 
     std::vector<int> labels = to_vector();
+
     int const num_ellipses = std::count(labels.begin(), labels.end(), ellipsis);
     if (num_ellipses > 1) {
       std::stringstream ss;
@@ -88,7 +89,7 @@ struct subscripts {
       }
     }
     else {
-      for (int i=0; i<ndim-num_subscripts-1; ++i) {
+      for (int i=0; i<ndim-num_subscripts; ++i) {
         labels.insert(std::next(labels.begin(), found_ellipsis), ellipsis);
       }
     }
@@ -96,7 +97,14 @@ struct subscripts {
     // Overwrite each repeated label with the offset to the first appearance
     // of the label.
     for (auto it=labels.begin(); it!=labels.end(); ++it) {
-      for (auto jt=std::next(it); jt!=labels.end(); jt=std::find(++jt,labels.end(),*it)) {
+      if (*it == ellipsis) {
+        continue;
+      }
+      for (
+          auto jt=std::find(std::next(it),labels.end(),*it);
+          jt!=labels.end();
+          jt=std::find(++jt,labels.end(),*it)
+      ) {
         *jt = -static_cast<int>(std::distance(it,jt));
       } 
     }
