@@ -169,66 +169,51 @@ typename std::enable_if<I < sizeof...(Ts),void>::type copy(
   copy<I+1>(dest, src);
 }
 
-template<size_t I=0lu, typename... Ts>
-typename std::enable_if<I == sizeof...(Ts),void>::type prepare_op_axes_loop(
-  std::tuple<Ts...> const& ops,
-  std::array<std::vector<int>,sizeof...(Ts)> const& combined_labels,
-  std::array<std::vector<int>,sizeof...(Ts)+1>& op_axes,
+template<size_t N>
+std::array<std::vector<int>,N+1> prepare_op_axes_loop(
+  std::array<std::vector<int>,N> const& combined_labels,
   std::vector<int> const& iter_labels,
   int ellipsis
 ) {
-}
+  std::array<std::vector<int>,N+1> op_axes;
 
-template<size_t I=0lu, typename... Ts>
-typename std::enable_if<I < sizeof...(Ts),void>::type prepare_op_axes_loop(
-  std::tuple<Ts...> const& ops,
-  std::array<std::vector<int>,sizeof...(Ts)> const& combined_labels,
-  std::array<std::vector<int>,sizeof...(Ts)+1>& op_axes,
-  std::vector<int> const& iter_labels,
-  int ellipsis
-) {
+  for (int j=0; j<N; ++j) {
+    std::vector<int>& axes = op_axes.at(j);
+    std::vector<int> const& labels = combined_labels.at(j);
+    int const ndim_op = labels.size();
+    int const ndim_iter = iter_labels.size();
 
-  int const ndim_op = std::get<I>(ops).dimension();
-  std::vector<int>& axes = op_axes.at(I);
-  std::vector<int> const& labels = combined_labels.at(I);
-  int const ndim_iter = iter_labels.size();
+    axes.resize(ndim_iter, -1);
 
-  axes.resize(ndim_iter, -1);
+    int ibroadcast = ndim_op-1;
+    for (int i=ndim_iter-1; i>=0; --i) {
+      int const label = iter_labels.at(i);
+      if (label == ellipsis) {
+        while (ibroadcast >= 0 && labels.at(ibroadcast) != 0) {
+          --ibroadcast;
+        }
 
-  int ibroadcast = ndim_op-1;
-  for (int i=ndim_iter-1; i>=0; --i) {
-    int const label = iter_labels.at(i);
-    if (label == ellipsis) {
-      while (ibroadcast >= 0 && labels.at(ibroadcast) != 0) {
-        --ibroadcast;
-      }
-
-      if (ibroadcast < 0) {
-        axes.at(i) = -1;
+        if (ibroadcast < 0) {
+          axes.at(i) = -1;
+        }
+        else {
+          axes.at(i) = ibroadcast;
+          --ibroadcast;
+        }
       }
       else {
-        axes.at(i) = ibroadcast;
-        --ibroadcast;
-      }
-    }
-    else {
-      auto const match = std::find(labels.begin(), labels.end(), label);
-      if (match == labels.end()) {
-        axes.at(i) = -1;
-      }
-      else {
-        axes.at(i) = std::distance(labels.begin(), match);
+        auto const match = std::find(labels.begin(), labels.end(), label);
+        if (match == labels.end()) {
+          axes.at(i) = -1;
+        }
+        else {
+          axes.at(i) = std::distance(labels.begin(), match);
+        }
       }
     }
   }
 
-  prepare_op_axes_loop<I+1>(
-    ops,
-    combined_labels,
-    op_axes,
-    iter_labels,
-    ellipsis
-  );
+  return op_axes;
 }
 
 template<typename... Ss>
@@ -286,8 +271,11 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   int const ndim_iter = iter_labels.size();
 
-  std::array<std::vector<int>,num_ops+1> op_axes;
-  prepare_op_axes_loop(ops,combined_labels,op_axes,iter_labels,ellipsis);
+  std::array<std::vector<int>,num_ops+1> op_axes = prepare_op_axes_loop(
+    combined_labels,
+    iter_labels,
+    ellipsis
+  );
 
   std::vector<int>& output_op_axes = op_axes.at(num_ops);
   output_op_axes.resize(ndim_iter);
