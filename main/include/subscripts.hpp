@@ -57,28 +57,6 @@ struct subscripts {
     int const found_ellipsis = ellipsis_it == labels.end() ? -1 :
       std::distance(labels.begin(), ellipsis_it);
 
-    std::vector<std::array<int,2>> label_counts;
-
-    for (int k=0; k<labels.size(); ++k) {
-      int const i = labels.at(k);
-
-      auto it = std::find_if(
-        label_counts.begin(),
-        label_counts.end(),
-        [i](std::array<int,2> const& a) { return a.at(0) == i; }
-      );
-
-      if (it != label_counts.end()) {
-        it->at(1)++;
-      }
-
-      else {
-        label_counts.push_back(std::array<int,2>());
-        label_counts.back().at(0) = i;
-        label_counts.back().at(1) = 1;
-      }
-    }
-
     if (found_ellipsis == -1) {
       if (num_subscripts != ndim) {
         std::stringstream ss;
