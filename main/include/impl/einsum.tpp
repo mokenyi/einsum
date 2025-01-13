@@ -4,7 +4,7 @@
 #include "implicit_out.hpp"
 #include "has_repeated_labels.hpp"
 #include "get_combined_dims_view.hpp"
-#include "multi_iterator.hpp"
+#include "operands_container.hpp"
 
 #define MAXDIMS 10
 
@@ -297,7 +297,7 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   auto operands_and_result = std::tuple_cat(ops, std::make_tuple(result));
 
-  auto iter = make_multi_iterator(operands_and_result, op_axes);
+  // auto iter = make_operandsmulti_iterator(operands_and_result, op_axes);
   // TODO: Do this for real!
  
   return result;
