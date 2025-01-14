@@ -31,9 +31,9 @@ public:
     using value_type        = current_t;
     using pointer           = current_t*;  // or also value_type*
     using reference         = current_t&;  // or also value_type&
-
+    using const_reference   = current_t const&;
     friend class operands_container<Ts...>;
-    reference operator*() const { return current; }
+    const_reference operator*() const { return current; }
     pointer operator->() { return &current; }
 
     // Prefix increment

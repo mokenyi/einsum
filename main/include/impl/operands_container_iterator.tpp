@@ -108,8 +108,6 @@ typename operands_container<Ts...>::iterator& operands_container<Ts...>::iterato
     {
       idx.at(j) = 0;
       if (j == 0) {
-        for (int i=0; i<parent.ndim; ++i) { std::cout << " " << idx.at(i); }
-        std::cout << std::endl;
         is_end = true;
       }
     }
