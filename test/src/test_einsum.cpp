@@ -17,9 +17,15 @@ TEST_CASE("einsum::eval() evaluates an Einstein summation of two operands") {
     {0.81280101, 0.43663051, 0.88750341, 0.32555251}
   };
 
-  xt::xarray<double> const z = einsum<subscripts<I,J>,subscripts<K,J>>(_)
+  xt::xarray<double> const actual = einsum<subscripts<I,J>,subscripts<K,J>>(_)
     .eval<subscripts<K,I>>(x, y);
 
-  std::cout << z << std::endl;
+  xt::xarray<double> const expected = {
+    { 0.9347806697505194,  0.9016754821643249},
+    { 0.7361135049751363,  0.5810650867741545},
+    { 1.2723366530831643,  0.8821723088938472}
+  };
+
+  CHECK(actual == expected);
 } 
 
