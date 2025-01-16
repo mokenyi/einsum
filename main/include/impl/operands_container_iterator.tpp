@@ -17,7 +17,7 @@ typename std::enable_if<N < sizeof...(Ts)-1, void>::type init_current(
 
 template<size_t I, typename... Ts>
 typename std::enable_if<I == 0, void>::type set_index(
-  std::tuple<typename Ts::value_type*...>& current,
+  typename operands_container<Ts...>::iterator::current_t& current,
   std::tuple<Ts...>& exp,
   typename operands_container<Ts...>::op_axes_type const& op_axes,
   std::vector<size_t> const& idx)
@@ -35,7 +35,7 @@ typename std::enable_if<I == 0, void>::type set_index(
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I > 0), void>::type set_index(
-  std::tuple<typename Ts::value_type*...>& current,
+  typename operands_container<Ts...>::iterator::current_t& current,
   std::tuple<Ts...>& exp,
   typename operands_container<Ts...>::op_axes_type const& op_axes,
   std::vector<size_t> const& idx)

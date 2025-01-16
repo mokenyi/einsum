@@ -288,7 +288,7 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   std::array<std::vector<size_t>,num_ops> op_sh;
   set_op_sh(op_sh, ops);
 
-  std::vector<size_t> const result_shape = get_result_shape(op_axes, op_sh);
+  std::vector<size_t> const result_shape = get_output_shape(op_axes, op_sh);
 
   xt::xarray<output_value_type> result;
   result.resize(result_shape);
@@ -299,8 +299,8 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   auto einsum_ops = make_operands_container(operands_and_result, op_axes);
   // TODO: Do this for real!
   
-  for (auto& c: einsum_ops) {
-    *std::get<num_ops> += product_of_pointees<0, num_ops>(c);
+  for (auto c: einsum_ops) {
+    *std::get<num_ops>(c) += product_of_pointees<0, num_ops>(c);
   }
 
   return result;

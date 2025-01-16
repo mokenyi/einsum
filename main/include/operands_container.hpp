@@ -24,7 +24,7 @@ public:
   );
 
   struct iterator {
-    using current_t = std::tuple<typename Ts::value_type*...>;
+    using current_t = std::tuple<typename std::remove_reference<Ts>::type::value_type*...>;
 
     using iterator_category = std::forward_iterator_tag;
     using difference_type   = std::ptrdiff_t;
@@ -34,6 +34,7 @@ public:
     using const_reference   = current_t const&;
     friend class operands_container<Ts...>;
     const_reference operator*() const { return current; }
+    reference operator*() { return current; }
     pointer operator->() { return &current; }
 
     // Prefix increment
