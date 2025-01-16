@@ -8,6 +8,22 @@
 #include <vector>
 #include <algorithm>
 
+template<size_t I=0, size_t N, typename... Ts>
+typename std::enable_if<I == N, typename std::common_type<Ts...>::type>::type
+product_of_pointees(
+  std::tuple<Ts*...> const& pointers
+) {
+  return static_cast<typename std::common_type<Ts...>::type>(1);
+}
+
+template<size_t I=0, size_t N, typename... Ts>
+typename std::enable_if<I < N, typename std::common_type<Ts...>::type>::type
+product_of_pointees(
+  std::tuple<Ts*...> const& pointers
+) {
+  return *std::get<I>(pointers) * product_of_pointees<I+1,N>(pointers);
+}
+
 template<int I = 0, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type get_ndim(
   std::tuple<Ts...> const& ops,

@@ -292,11 +292,16 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   xt::xarray<output_value_type> result;
   result.resize(result_shape);
+  result.fill(static_cast<output_value_type>(0));
 
-  auto operands_and_result = std::tuple_cat(ops, std::make_tuple(result));
+  auto operands_and_result = std::tuple_cat(std::move(ops), std::tie(result));
 
-  auto iter = make_operands_container(operands_and_result, op_axes);
+  auto einsum_ops = make_operands_container(operands_and_result, op_axes);
   // TODO: Do this for real!
- 
+  
+  for (auto& c: einsum_ops) {
+    *std::get<num_ops> += product_of_pointees<0, num_ops>(c);
+  }
+
   return result;
 }
