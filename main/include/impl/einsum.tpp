@@ -5,6 +5,7 @@
 #include "has_repeated_labels.hpp"
 #include "get_combined_dims_view.hpp"
 #include "operands_container.hpp"
+#include "einsum_util.hpp"
 
 #define MAXDIMS 10
 
@@ -12,22 +13,6 @@ template<typename... Ss>
 einsum<Ss...>::einsum(int e)
 : ellipsis(e)
 {
-}
-
-template<int I = 0, typename... Ts>
-typename std::enable_if<I == sizeof...(Ts), void>::type get_ndim(
-  std::tuple<Ts...> const& ops,
-  std::array<size_t,sizeof...(Ts)>& ndim
-) {
-}
-
-template<int I = 0, typename... Ts>
-typename std::enable_if<I < sizeof...(Ts), void>::type get_ndim(
-  std::tuple<Ts...> const& ops,
-  std::array<size_t,sizeof...(Ts)>& ndim
-) {
-  ndim.at(I) = std::get<I>(ops).dimension();
-  get_ndim<I+1>(ops, ndim);
 }
 
 template<int I = 0, typename... Ss>
@@ -266,7 +251,9 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   std::vector<int> iter_labels(output_labels);
   for (auto const& label_count: label_counts){
-    iter_labels.push_back(label_count.at(0));
+    if (label_count.at(1) > 1) {
+      iter_labels.push_back(label_count.at(0));
+    }
   }
 
   int const ndim_iter = iter_labels.size();
@@ -276,6 +263,8 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
     iter_labels,
     ellipsis
   );
+
+  std::vector<size_t> return_shape;
 
   std::vector<int>& output_op_axes = op_axes.at(num_ops);
   output_op_axes.resize(ndim_iter);
@@ -293,11 +282,20 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   using output_value_type = typename std::common_type<typename Ts::value_type...>::type;
 
+  std::array<size_t,num_ops> ndim_combined;
+  get_ndim(ops, ndim_combined);
+
+  std::array<std::vector<size_t>,num_ops> op_sh;
+  set_op_sh(op_sh, ops);
+
+  std::vector<size_t> const result_shape = get_result_shape(op_axes, op_sh);
+
   xt::xarray<output_value_type> result;
+  result.resize(result_shape);
 
   auto operands_and_result = std::tuple_cat(ops, std::make_tuple(result));
 
-  // auto iter = make_operandsmulti_iterator(operands_and_result, op_axes);
+  auto iter = make_operands_container(operands_and_result, op_axes);
   // TODO: Do this for real!
  
   return result;

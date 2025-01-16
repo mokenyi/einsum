@@ -70,7 +70,7 @@ private:
   // [i, j] = index in op i of the dim which dim j in iterator is mapped to.
   op_axes_type op_axes;
   std::array<size_t, num_ops> op_idx;
-  xt::xtensor<int,2> op_sh;
+  std::array<std::vector<size_t>,num_ops> op_sh;
   void reset(size_t arg, size_t dim);
   void set_shape();
 };
