@@ -7,8 +7,6 @@
 #include "operands_container.hpp"
 #include "einsum_util.hpp"
 
-#define MAXDIMS 10
-
 template<typename... Ss>
 einsum<Ss...>::einsum(int e)
 : ellipsis(e)

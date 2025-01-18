@@ -20,8 +20,29 @@ std::string get_test_tree_root() {
 }
 
 double const tol = 1.e-9;
+TEST_CASE("Combined dimensions, two operands") {
+  std::string const test_tree_root = get_test_tree_root();
+  xt::xarray<long> const x = xt::load_npy<long>(
+      test_tree_root + "/data/combined_dims_two/x.npy"
+  );
 
-TEST_CASE("Diagonals") {
+  xt::xarray<long> const y = xt::load_npy<long>(
+      test_tree_root + "/data/combined_dims_two/y.npy"
+  );
+
+  xt::xarray<long> const actual = einsum<
+    subscripts<I,J,J>,
+    subscripts<J,K>
+   >(_).eval<implicit_out>(x,y);
+
+  xt::xarray<long> const expected = xt::load_npy<long>(
+      test_tree_root + "/data/combined_dims_two/z.npy"
+  );
+
+  CHECK(actual == expected);
+}
+
+TEST_CASE("Combined dimensions with suppressed summation, one operand") {
   std::string const test_tree_root = get_test_tree_root();
   xt::xarray<long> const x = xt::load_npy<long>(
       test_tree_root + "/data/diagonal/x.npy"
