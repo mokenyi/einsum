@@ -1,6 +1,3 @@
-.PHONY: main test
-main:
-	cd main && $(MAKE)
-
+.PHONY: test
 test:
 	cd test && $(MAKE)
