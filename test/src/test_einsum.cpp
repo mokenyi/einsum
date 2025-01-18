@@ -24,12 +24,12 @@ double const tol = 1.e-9;
 TEST_CASE("Broadcast dimensions, explicit output labels") {
   std::string const test_tree_root = get_test_tree_root();
 
-  // shape = [2,3,4,5]
+  // random array with shape = [2, 3, 4, 5]
   xt::xarray<double> const x = xt::load_npy<double>(
       test_tree_root + "/data/broadcast_explicit/x.npy"
   );
 
-  // shape = [3,5]
+  // random array with shape = [3, 5]
   xt::xarray<double> const y = xt::load_npy<double>(
       test_tree_root + "/data/broadcast_explicit/y.npy"
   );
@@ -39,7 +39,6 @@ TEST_CASE("Broadcast dimensions, explicit output labels") {
       test_tree_root + "/data/broadcast_explicit/z.npy"
   );
 
-  // shape = [3, 3, 4, 2]
   xt::xarray<double> const actual = einsum<
     subscripts<I,_,J>,
     subscripts<K,J>
@@ -52,14 +51,17 @@ TEST_CASE("Broadcast dimensions, explicit output labels") {
 TEST_CASE("Broadcast dimensions, implicit output labels") {
   std::string const test_tree_root = get_test_tree_root();
 
+  // random array with shape = [2, 3, 4, 5]
   xt::xarray<double> const x = xt::load_npy<double>(
       test_tree_root + "/data/broadcast_implicit/x.npy"
   );
 
+  // random array with shape = [3, 5]
   xt::xarray<double> const y = xt::load_npy<double>(
       test_tree_root + "/data/broadcast_implicit/y.npy"
   );
 
+  // shape = [3, 4, 2, 3]
   xt::xarray<double> const expected = xt::load_npy<double>(
       test_tree_root + "/data/broadcast_implicit/z.npy"
   );
