@@ -205,8 +205,11 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   // TODO: Consider view_eval(op_in.derived_cast()) to allow op_in to work
   // with general xexpressions.
   constexpr size_t num_ops = sizeof...(op_in);
+
+  // Pack expand the numbers of dimensions in the operands into array
+  // for easy access.
   std::array<size_t,num_ops> ndim;
-  get_ndim(std::make_tuple(op_in.derived_cast()...), ndim);
+  get_ndim(std::tie(op_in.derived_cast()...), ndim);
 
   auto const ops = std::make_tuple(
     get_combined_dims_view<Ss>(
@@ -215,8 +218,12 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
     )...
   );
 
+  // [0] of each item is a label/subscript that occurs in Ss.
+  // [1] of each item is the number of times that label occurs (i.e. output
+  // labels will have [1] = 1).
   std::vector<std::array<int,2>> label_counts;
 
+  // Pack expand the operand subscript types.
   auto const subs = std::make_tuple(Ss()...);
 
   get_label_counts_loop(subs, ndim, label_counts, ellipsis);
@@ -238,6 +245,45 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   //  std::cout << std::endl;
   //}
 
+  /*
+   * In the subscripts of an operand, _ denotes broadcast
+   * dimensions, which fall into two categories:
+   * - unlabelled dimensions, which are implicitly free Einstein indexes
+   *   so they appear in output. An unlabelled dimension in operand A
+   *   may correspond to either
+   *   - an unlabelled dim in op B if the position of the unlabelled dim
+   *     in op A's set of broadcast dims is greater than or equal to
+   *     (ndim(broadcast,A) - ndim(unlabelled, B)).
+   *   - an inserted dim in op B otherwise.
+   * - inserted dimensions, which are created by inserting an extra dim
+   *   at the end of the operand's broadcast dimensions in its shape
+   *   tuple.
+   *
+   * Find the number of broadcast dimensions, which is the maximum
+   * number of unlabelled dimensions in an combined_labels array.
+   *
+   * The ops are broadcast such that the ellipses denote identical
+   * slices of the shape tuples of the broadcasted ops e.g. consider
+   * np.einsum('ij...,jk...',a,b) where a.shape == (3,3,5,3),
+   * b.shape == (3,4,3). a has 2 unlabelled dims and 0 inserted dims.
+   * b has 1 unlabelled dim and 1 inserted dim.
+   * After broadcast (denoted with `)
+   * a`.shape == (3,3,5,3), b`.shape == (3,4,5,3). The ellipsis denotes
+   * a`.shape[2:] which also equals b`.shape[2:]. In general for n_op
+   * ops, n(inserted, A) = (ndim_broadcast - n(unlabelled, A)) dims will
+   * be added to op A during broadcast, where n(unlabelled, A) = number
+   * of unlabelled dims in op A.
+   *
+   * To get the result for the above example, we iterate the broadcast
+   * dimensions in each op simultaneously, doing the matrix product for
+   * each value of l and m, say, which index the last two dimensions in
+   * both ops.
+   *
+   * In the general case, the shape of the result will have dims
+   * coming from the summation over non-broadcast dims in the
+   * operands (i.e. those with explicit labels in the subscripts string) plus
+   * ndim_broadcast broadcast dims.
+   */
   int ndim_broadcast(-1);
   for (auto const& combined_label: combined_labels) {
     int const num_zeros = std::count(
@@ -261,6 +307,8 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   size_t const ndim_output = output_labels.size();
 
+  // iter_labels comprise the labels in the output array (i.e. free indexes)
+  // followed by the dummy indexes.
   std::vector<int> iter_labels(output_labels);
   for (auto const& label_count: label_counts){
     if (std::find(
@@ -277,6 +325,8 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
 
   int const ndim_iter = iter_labels.size();
 
+  // dimension j in the iterator maps to dimension op_axes[i][j] in operand
+  // i.
   std::array<std::vector<int>,num_ops+1> op_axes = prepare_op_axes_loop(
     combined_labels,
     iter_labels,
@@ -323,7 +373,6 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   auto const operands_and_result = std::tuple_cat(ops, std::tie(result));
 
   auto einsum_ops = make_operands_container(operands_and_result, op_axes);
-  // TODO: Do this for real!
   
   for (auto c: einsum_ops) {
     *std::get<num_ops>(c) += product_of_pointees<0, num_ops>(c);
