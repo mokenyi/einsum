@@ -8,6 +8,13 @@
 #include <vector>
 #include <algorithm>
 
+template<typename T>
+void print_vector(std::vector<T> const& v, std::ostream& out) {
+  for (auto const& t: v) {
+    out << " " << t;
+  } 
+}
+
 template<size_t I=0, size_t N, typename... Ts>
 typename std::enable_if<I == N, typename std::common_type<Ts...>::type>::type
 product_of_pointees(

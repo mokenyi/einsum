@@ -21,6 +21,22 @@ std::string get_test_tree_root() {
 
 double const tol = 1.e-9;
 
+TEST_CASE("Diagonals") {
+  std::string const test_tree_root = get_test_tree_root();
+  xt::xarray<long> const x = xt::load_npy<long>(
+      test_tree_root + "/data/diagonal/x.npy"
+  );
+
+  xt::xarray<long> const actual = einsum<subscripts<I,J,J>>(_)
+    .eval<subscripts<I,J>>(x);
+
+  xt::xarray<long> const expected = xt::load_npy<long>(
+      test_tree_root + "/data/diagonal/y.npy"
+  );
+
+  CHECK(actual == expected);
+}
+
 TEST_CASE("Broadcast dimensions, explicit output labels") {
   std::string const test_tree_root = get_test_tree_root();
 

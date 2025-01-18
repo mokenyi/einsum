@@ -222,13 +222,23 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   auto const subs = std::make_tuple(Ss()...);
 
   get_label_counts_loop(subs, ndim, label_counts, ellipsis);
+  //std::cout << "label_counts" << std::endl;
+  //for (int i=0; i<label_counts.size(); ++i) {
+  //  std::cout << label_counts.at(i).at(0) << " " << label_counts.at(i).at(1) << std::endl;
+  //}
   
   std::array<std::vector<int>,num_ops> combined_labels;
-
+  
   copy(
     combined_labels,
     std::make_tuple(Ss::get_combined_labels(op_in.derived_cast().dimension(),ellipsis)...)
   );
+
+  //std::cout << "combined_labels" << std::endl;
+  //for (int i=0; i<combined_labels.size(); ++i) {
+  //  print_vector(combined_labels.at(i), std::cout);
+  //  std::cout << std::endl;
+  //}
 
   int ndim_broadcast(-1);
   for (auto const& combined_label: combined_labels) {
@@ -247,14 +257,25 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
     ellipsis
   );
 
+  //std::cout << "output_labels" << std::endl;
+  //print_vector(output_labels, std::cout);
+  //std::cout << std::endl;
+
   size_t const ndim_output = output_labels.size();
 
   std::vector<int> iter_labels(output_labels);
   for (auto const& label_count: label_counts){
-    if (label_count.at(1) > 1) {
+    if (std::find(
+          output_labels.begin(),
+          output_labels.end(),
+          label_count.at(0)) == output_labels.end()) {
       iter_labels.push_back(label_count.at(0));
     }
   }
+
+  //std::cout << "iter_labels" << std::endl;
+  //print_vector(iter_labels, std::cout);
+  //std::cout << std::endl;
 
   int const ndim_iter = iter_labels.size();
 
@@ -279,6 +300,13 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
     output_op_axes.end(),
     -1
   );
+
+
+  //std::cout << "op_axes" << std::endl;
+  //for (auto const& v: op_axes) {
+  //  print_vector(v, std::cout);
+  //  std::cout << std::endl;
+  //}
 
   using output_value_type = typename std::common_type<typename Ts::value_type...>::type;
 

@@ -98,11 +98,12 @@ struct subscripts {
 
   static std::vector<int> get_combined_labels(int ndim, int ellipsis) {
     std::vector<int> labels = parse_operand_subscripts(ndim, ellipsis);
-    for (auto it=labels.begin(); it!=labels.end(); ++it) {
-      if (*it < 0) {
-        it = labels.erase(it);
-      }
-    }
+    labels.erase(
+        std::remove_if(
+          labels.begin(), labels.end(), [](int i) { return i < 0; }
+        ),
+        labels.end()
+    );
 
     return labels;
   }
