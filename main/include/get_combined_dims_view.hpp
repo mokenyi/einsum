@@ -6,16 +6,12 @@
 #include <iostream>
 
 template<typename I, typename E>
-typename std::enable_if<
-  has_repeated_labels<
-    I::start_first,
-    I::start_second,
-    typename I::tuple_type
-  >::value,
-  xt::xstrided_view<xt::xclosure_t<E const&>,typename E::shape_type,xt::layout_type::dynamic>
->::type get_combined_dims_view(xt::xexpression<E> const& x, int ellipsis) {
-  std::cout << "has repeated label" << std::endl;
-  auto const& y = x.derived_cast();
+xt::xstrided_view<
+  xt::xclosure_t<E>,
+  xt::svector<size_t>,
+  xt::layout_type::dynamic
+> get_combined_dims_view(E&& x, int ellipsis) {
+  auto& y = x;
   int const ndim = y.dimension();
   std::vector<int> const labels = I::parse_operand_subscripts(ndim, ellipsis);
   std::vector<int> icombinemap(ndim, -1);
@@ -53,19 +49,6 @@ typename std::enable_if<
   using strides_type = xt::get_strides_t<shape_type>;
 
   return xt::strided_view(y,shape_type{new_dims.begin(), new_dims.end()},strides_type{new_strides.begin(), new_strides.end()},0LU,xt::layout_type::dynamic);
-}
-
-template<typename I, typename E>
-typename std::enable_if<
-  !has_repeated_labels<
-    I::start_first,
-    I::start_second,
-    typename I::tuple_type
-  >::value,
-  xt::xexpression<E> const&
->::type get_combined_dims_view(xt::xexpression<E> const& x, int ellipsis) {
-  std::cout << "no repeated label" << std::endl;
-  return x;
 }
 
 #endif // GET_COMBINED_DIMS_VIEW_HPP

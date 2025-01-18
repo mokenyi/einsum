@@ -210,11 +210,11 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   std::array<size_t,num_ops> ndim;
   get_ndim(std::make_tuple(op_in.derived_cast()...), ndim);
 
-  auto ops = std::make_tuple(
+  auto const ops = std::make_tuple(
     get_combined_dims_view<Ss>(
-      op_in,
+      op_in.derived_cast(),
       ellipsis
-    ).derived_cast()...
+    )...
   );
 
   std::vector<std::array<int,2>> label_counts;
@@ -294,7 +294,7 @@ auto einsum<Ss...>::eval(xt::xexpression<Ts> const&... op_in) -> xt::xarray<type
   result.resize(result_shape);
   result.fill(static_cast<output_value_type>(0));
 
-  auto operands_and_result = std::tuple_cat(std::move(ops), std::tie(result));
+  auto const operands_and_result = std::tuple_cat(ops, std::tie(result));
 
   auto einsum_ops = make_operands_container(operands_and_result, op_axes);
   // TODO: Do this for real!

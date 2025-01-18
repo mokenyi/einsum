@@ -24,7 +24,7 @@ public:
   );
 
   struct iterator {
-    using current_t = std::tuple<typename std::remove_reference<Ts>::type::value_type*...>;
+    using current_t = std::tuple<decltype((std::declval<Ts>().data()))...>;
 
     using iterator_category = std::forward_iterator_tag;
     using difference_type   = std::ptrdiff_t;
