@@ -5,13 +5,72 @@
 #include "xtensor/xfixed.hpp"
 #include "labels.hpp"
 #include "subscripts.hpp"
+#include "xtensor/xnpy.hpp"
+#include <wordexp.h>
+
+std::string get_test_tree_root() {
+  wordexp_t p;
+  wordexp("$EINSUM_TEST_HOME",&p,0);
+  
+  std::string const ret(p.we_wordv[0]);
+
+  wordfree(&p);
+
+  return ret;
+}
+
+double const tol = 1.e-9;
 
 TEST_CASE("Broadcast dimensions, explicit output labels") {
+  std::string const test_tree_root = get_test_tree_root();
 
+  // shape = [2,3,4,5]
+  xt::xarray<double> const x = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_explicit/x.npy"
+  );
+
+  // shape = [3,5]
+  xt::xarray<double> const y = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_explicit/y.npy"
+  );
+
+  // shape = [3, 3, 4, 2]
+  xt::xarray<double> const expected = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_explicit/z.npy"
+  );
+
+  // shape = [3, 3, 4, 2]
+  xt::xarray<double> const actual = einsum<
+    subscripts<I,_,J>,
+    subscripts<K,J>
+  >(_).eval<subscripts<K,_,I>>(x,y);
+
+  CHECK(actual.shape() == expected.shape());
+  CHECK(xt::amax(xt::abs(actual - expected))(0) < tol);
 }
 
 TEST_CASE("Broadcast dimensions, implicit output labels") {
+  std::string const test_tree_root = get_test_tree_root();
 
+  xt::xarray<double> const x = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_implicit/x.npy"
+  );
+
+  xt::xarray<double> const y = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_implicit/y.npy"
+  );
+
+  xt::xarray<double> const expected = xt::load_npy<double>(
+      test_tree_root + "/data/broadcast_implicit/z.npy"
+  );
+
+  xt::xarray<double> const actual = einsum<
+    subscripts<I,_,J>,
+    subscripts<K,J>
+  >(_).eval<implicit_out>(x,y);
+
+  CHECK(actual.shape() == expected.shape());
+  CHECK(xt::amax(xt::abs(actual - expected))(0) < tol);
 }
 
 TEST_CASE("No broadcast dimensions, implicit output labels") {
