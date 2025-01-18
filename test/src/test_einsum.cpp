@@ -20,6 +20,33 @@ std::string get_test_tree_root() {
 }
 
 double const tol = 1.e-9;
+TEST_CASE("Broadcast dims, three operands") {
+  std::string const test_tree_root = get_test_tree_root();
+  xt::xarray<long> const x = xt::load_npy<long>(
+      test_tree_root + "/data/broadcast_three/x.npy"
+  );
+
+  xt::xarray<long> const y = xt::load_npy<long>(
+      test_tree_root + "/data/broadcast_three/y.npy"
+  );
+  
+  xt::xarray<long> const z = xt::load_npy<long>(
+      test_tree_root + "/data/broadcast_three/z.npy"
+  );
+
+  xt::xarray<long> const actual = einsum<
+    subscripts<I,J>,
+    subscripts<J,K>,
+    subscripts<K,_,L>
+   >(_).eval<implicit_out>(x,y,z);
+
+  xt::xarray<long> const expected = xt::load_npy<long>(
+      test_tree_root + "/data/broadcast_three/w.npy"
+  );
+
+  CHECK(actual == expected);  
+}
+
 TEST_CASE("Combined dimensions, two operands") {
   std::string const test_tree_root = get_test_tree_root();
   xt::xarray<long> const x = xt::load_npy<long>(
