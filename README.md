@@ -8,8 +8,8 @@ enum labels: int {
   K
 }
 
-auto x = einsum<subscripts<I,J,_>,subscripts<J,K,_>>(_).eval<subscripts<K,_,I>>(y,z)
-auto w = einsum<subscripts<I,J,_>,subscripts<J,K,_>>(_).eval<implicit_out>(y,z)
+auto x = einsum<subscripts<I,J>,subscripts<J,K,_>>(_).eval<subscripts<K,_,I>>(y,z)
+auto w = einsum<subscripts<I,J>,subscripts<J,K,_>>(_).eval<implicit_out>(y,z)
 ```
 for the equivalent numpy statements
 ```python
